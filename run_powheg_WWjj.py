@@ -38,10 +38,16 @@ def replaceAll (file,searchExp,replaceExp) :
 def prepareJob (tag, i, folderName) :
     filename = 'run_' + tag + '.job'
     f = open (filename, 'w')
-    f.write ('cd ' + rootfolder + '\n')
-    f.write ('source setup.sh' + '\n')
-#    f.write ('cd -\n')
-    f.write ('cd ' + folderName + '\n')
+
+    f.write ('cd /afs/cern.ch/user/g/govoni/CMSSW_7_2_0/src/                                              \n')
+    f.write ('eval `scram run -sh`                                                                        \n')
+    f.write ('export FASTJET_BASE=`scram tool info fastjet | grep FASTJET_BASE | sed -e s%FASTJET_BASE=%%`\n')
+    f.write ('export PATH=$FASTJET_BASE/bin/:$PATH                                                        \n')
+    f.write ('export LHAPDF_BASE=`scram tool info lhapdf | grep LHAPDF_BASE | sed -e s%LHAPDF_BASE=%%`    \n')
+    f.write ('export PATH=$LHAPDF_BASE/bin/:$PATH                                                         \n')
+    f.write ('export LHAPATH=`scram tool info lhapdf | grep LHAPATH | sed -e s%LHAPATH=%%`                \n')
+
+    f.write ('cd ' + rootfolder + '/' + folderName + '\n')
     f.write ('echo ' + str (i) + ' | ../pwhg_main > log_' + tag + '.log 2>&1' + '\n')
 #    f.write ('cp * ' + rootfolder + '/' + folderName + '\n')
     f.close ()
@@ -57,8 +63,18 @@ def prepareJobForEvents (tag, i, folderName, EOSfolder) :
     f = open (filename, 'w')
     f.write ('cp ' + rootfolder + '/' + folderName + '/powheg.input ./' + '\n')
     f.write ('cp ' + rootfolder + '/' + folderName + '/*.dat  ./' + '\n')
-    f.write ('cd ' + rootfolder + '\n')
-    f.write ('source setup.sh' + '\n')
+
+    f.write ('cd /afs/cern.ch/user/g/govoni/CMSSW_7_2_0/src/                                              \n')
+    f.write ('eval `scram run -sh`                                                                        \n')
+    f.write ('export FASTJET_BASE=`scram tool info fastjet | grep FASTJET_BASE | sed -e s%FASTJET_BASE=%%`\n')
+    f.write ('export PATH=$FASTJET_BASE/bin/:$PATH                                                        \n')
+    f.write ('export LHAPDF_BASE=`scram tool info lhapdf | grep LHAPDF_BASE | sed -e s%LHAPDF_BASE=%%`    \n')
+    f.write ('export PATH=$LHAPDF_BASE/bin/:$PATH                                                         \n')
+    f.write ('export LHAPATH=`scram tool info lhapdf | grep LHAPATH | sed -e s%LHAPATH=%%`                \n')
+
+#    f.write ('cd ' + rootfolder + '\n')
+#    f.write ('source setup.sh' + '\n')
+
     f.write ('cd -' + '\n')
     f.write ('pwd' + '\n')
     f.write ('ls' + '\n')
@@ -98,16 +114,16 @@ def runWithXgrid (parstage, xgrid, folderName, njobs, powInputName, jobtag) :
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
-def run (parser.parstage, folderName, EOSfolder, njobs, powInputName, jobtag) :
+def run (parstage, folderName, EOSfolder, njobs, powInputName, jobtag) :
     print 'run : submitting jobs'
     runCommand ('rm ' + folderName + 'powheg.input')
-    sedcommand = 'cat ./' + powInputName + ' | sed "s/parallelstage.*/parallelstage ' + parser.parstage + '/ ; s/xgriditeration.*/xgriditeration 1/">powheg.input'
+    sedcommand = 'cat ./' + powInputName + ' | sed "s/parallelstage.*/parallelstage ' + parstage + '/ ; s/xgriditeration.*/xgriditeration 1/">powheg.input'
     runCommand (sedcommand)
     runCommand ('cp powheg.input ' + folderName)
-    runCommand ('mv powheg.input ' + folderName + '/powheg.input.' + parser.parstage)
+    runCommand ('mv powheg.input ' + folderName + '/powheg.input.' + parstage)
     for i in range (1, njobs + 1) :
         tag = jobtag + '_' + str (i)
-        if parser.parstage == '4' : jobname = prepareJobForEvents (tag, i, folderName, EOSfolder)
+        if parstage == '4' : jobname = prepareJobForEvents (tag, i, folderName, EOSfolder)
         else               : jobname = prepareJob (tag, i, folderName)
         jobID = jobtag + '_' + str (i)
         runCommand ('bsub -J ' + jobID + ' -u pippopluto -q ' + QUEUE + ' < ' + jobname, 1, TESTING == 0)
@@ -132,22 +148,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser (description = 'run phantom productions on lxplus')
     parser.add_argument('-p', '--parstage'      , default= '1',            help='stage of the production process [1]')
     parser.add_argument('-x', '--xgrid'         , default= '1',            help='loop number for the girds production [1]')
-    parser.add_argument('-f', '--folderName'    , default='testProd' ,     help='local folder and last eos folder name[testProd]')
+    parser.add_argument('-f', '--folderName'    , default='testProd',      help='local folder and last eos folder name[testProd]')
     parser.add_argument('-e', '--eosFolder'     , default='NONE' ,         help='folder before the last one, on EOS')
     parser.add_argument('-t', '--totEvents'     , default= '10000',        help='total number of events to be generated [10000]')
     parser.add_argument('-n', '--numEvents'     , default= '2000',         help='number of events for a single job [2000]')
     parser.add_argument('-i', '--inputTemplate' , default= 'powheg.input', help='input cfg file (fixed) [=powheg.input]')
+    parser.add_argument('-q', '--lsfQueue'      , default= '2nw',          help='LSF queue [2nw]')
 
     args = parser.parse_args ()
-
-    EOSfolder = parser.folderName
+    
+    QUEUE = args.lsfQueue
+    EOSfolder = args.folderName
 
     print
-    print 'RUNNING PARAMS: parser.parstage = ' + parser.parstage + ' , parser.xgrid = ' + parser.xgrid  + ' , parser.folderName = ' + parser.folderName 
-    print '                parser.totEvents = ' + parser.totEvents 
-    print '                powheg input cfg file : ' + parser.inputTemplate 
-    print '                working folder : ' + parser.folderName
-    print '                EOS folder : ' + parser.eosFolder + '/' + EOSfolder
+    print 'RUNNING PARAMS: args.parstage = ' + args.parstage + ' , args.xgrid = ' + args.xgrid  + ' , args.folderName = ' + args.folderName 
+    print '                args.totEvents = ' + args.totEvents 
+    print '                powheg input cfg file : ' + args.inputTemplate 
+    print '                working folder : ' + args.folderName
+    print '                EOS folder : ' + args.eosFolder + '/' + EOSfolder
     print '                base folder : ' + rootfolder
     print
  
@@ -155,26 +173,25 @@ if __name__ == "__main__":
         print '  --- TESTNG, NO submissions will happen ---  '
         print
 
-    res = runCommand ('ls ' + parser.folderName)
-    if parser.parstage == '1' and parser.xgrid == '1' and res == 0 :
-        print 'folder ' + parser.folderName + ' existing, exiting'
+    res = runCommand ('ls ' + args.folderName)
+    if args.parstage == '1' and args.xgrid == '1' and res == 0 :
+        print 'folder ' + args.folderName + ' existing, exiting'
         sys.exit (1)
-    if parser.parstage == '1' and parser.xgrid == '1' :
-        runCommand ('mkdir ' + parser.folderName)
-        runCommand ('cp pwgseeds.dat ' + parser.folderName)
+    if args.parstage == '1' and args.xgrid == '1' :
+        runCommand ('mkdir ' + args.folderName)
+        runCommand ('cp pwgseeds.dat ' + args.folderName)
 #        #FIXME this is a crude hardcoded trick to overcome some problems in LHAPDF usage
-#        runCommand ('ln -s /afs/cern.ch/user/g/govoni/work/HiggsPlusJets/lhapdf/share/lhapdf/PDFsets/CT10.LHgrid ./'  + parser.folderName)
-    if parser.parstage == '4' :    
-        runCommand (eoscmd + ' mkdir /eos/cms/store/user/govoni/LHE/powheg/' + parser.eosFolder, 1, 1)
-        runCommand (eoscmd + ' mkdir /eos/cms/store/user/govoni/LHE/powheg/' + parser.eosFolder + '/' + EOSfolder, 1, 1)
+#        runCommand ('ln -s /afs/cern.ch/user/g/govoni/work/HiggsPlusJets/lhapdf/share/lhapdf/PDFsets/CT10.LHgrid ./'  + args.folderName)
+    if args.parstage == '4' :    
+        runCommand (eoscmd + ' mkdir /eos/cms/store/user/govoni/LHE/powheg/' + args.eosFolder, 1, 1)
+        runCommand (eoscmd + ' mkdir /eos/cms/store/user/govoni/LHE/powheg/' + args.eosFolder + '/' + EOSfolder, 1, 1)
 
-    njobs = int (parser.totEvents) / int (parser.numEvents)
+    njobs = int (args.totEvents) / int (args.numEvents)
 
-    sedcommand = 'cat ./' + powInputName + 
-                 ' | sed "s/numevts.*/numevts ' + parser.numEvents + '/">' + 
-                 parser.inputTemplate + '_tempo'
-    powInputName = parser.inputTemplate + '_tempo'
+    sedcommand = 'cat ./' + args.inputTemplate + ' | sed "s/numevts.*/numevts ' + args.numEvents + '/">' + args.inputTemplate + '_tempo'
+    runCommand (sedcommand)
+    powInputName = args.inputTemplate + '_tempo'
 
-    jobtag = parser.parstage + '_' + parser.xgrid
-    if parser.parstage == '1' : runWithparser.xgrid (parser.parstage, parser.xgrid, parser.folderName, njobs, powInputName, jobtag)
-    else               : run (parser.parstage, parser.folderName, EOSfolder, njobs, powInputName, jobtag)
+    jobtag = args.parstage + '_' + args.xgrid
+    if args.parstage == '1' : runWithXgrid (args.parstage, args.xgrid, args.folderName, njobs, powInputName, jobtag)
+    else                    : run (args.parstage, args.folderName, EOSfolder, njobs, powInputName, jobtag)
