@@ -85,7 +85,7 @@ def prepareJobForEvents (tag, i, folderName, EOSfolder) :
     elif i < 100  : lhefilename = lhefilename + '00' + str (i) + '.lhe'
     elif i < 1000 : lhefilename = lhefilename + '0' + str (i) + '.lhe'
     else          : lhefilename = lhefilename + str (i) + '.lhe'
-    f.write ('cmsStage ' + lhefilename + ' /store/user/govoni/LHE/powheg/14TeV/' + EOSfolder + '\n')
+    f.write ('cmsStage ' + lhefilename + ' /store/user/govoni/LHE/powheg/' + EOSfolder + '/\n')
     f.write ('rm ' + lhefilename + '\n')
     f.close ()
     return filename
@@ -194,4 +194,4 @@ if __name__ == "__main__":
 
     jobtag = args.parstage + '_' + args.xgrid
     if args.parstage == '1' : runWithXgrid (args.parstage, args.xgrid, args.folderName, njobs, powInputName, jobtag)
-    else                    : run (args.parstage, args.folderName, EOSfolder, njobs, powInputName, jobtag)
+    else                    : run (args.parstage, args.folderName, args.eosFolder + '/' + EOSfolder, njobs, powInputName, jobtag)
