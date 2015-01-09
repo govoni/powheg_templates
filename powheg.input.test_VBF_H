@@ -1,6 +1,7 @@
 ! PG 06/01/15 test of powheg V2
 ! PG running on setup from CMSSW_7_2_0
-! PG change pdf and energy, H mass and width, leaving unchange every other parameters
+! PG change pdf and energy, H mass and width
+! PG asking for manyseeds
 
 numevts 100000    ! number of events to be generated
 ih1   1           ! hadron 1 (1 for protons, -1 for antiprotons)
@@ -24,9 +25,9 @@ lhans2  10800         ! pdf set for hadron 2 (LHA numbering)
 use-old-grid    1 ! if 1 use old grid if file pwggrids.dat is present (<> 1 regenerate)
 use-old-ubound  1 ! if 1 use norm of upper bounding function stored in pwgubound.dat, if present; <> 1 regenerate
 
-ncall1 50000   ! number of calls for initializing the integration grid
+ncall1 500000  ! number of calls for initializing the integration grid
 itmx1    5     ! number of iterations for initializing the integration grid
-ncall2 50000   ! number of calls for computing the integral and finding upper bounding envelope
+ncall2 500000  ! number of calls for computing the integral and finding upper bounding envelope
 itmx2    5     ! number of iterations for computing the integral and finding upper bouding envelope
 foldcsi   2    ! number of folds on csi integration
 foldy     5    ! number of folds on  y  integration
@@ -35,11 +36,11 @@ nubound 100000 ! number of calls to set up the upper bounding norms for radiatio
 
 
 ! OPTIONAL PARAMETERS
-withnegweights 1  ! (default 0) if 1, use negative weights
-xupbound 2d0   ! increase upper bound for radiation generation
-#renscfact  1d0   ! (default 1d0) ren scale factor: muren  = muref * renscfact 
-#facscfact  1d0   ! (default 1d0) fac scale factor: mufact = muref * facscfact 
-#ptsupp     0d0   ! (default 0d0)  mass param for Born suppression factor (generation cut) If < 0 suppfact = 1
+withnegweights 1   ! (default 0) if 1, use negative weights
+xupbound 2d0       ! increase upper bound for radiation generation
+#renscfact  1d0    ! (default 1d0) ren scale factor: muren  = muref * renscfact 
+#facscfact  1d0    ! (default 1d0) fac scale factor: mufact = muref * facscfact 
+#ptsupp     0d0    !  (default 0d0)  mass param for Born suppression factor (generation cut) If < 0 suppfact = 1
 #bornonly   1      ! (default 0) if 1 do Born only
 withdamp    1      ! (default 0, do not use) use Born-zero damping factor
 #testplots  1      ! (default 0, do not) do NLO and PWHG distributions
@@ -48,7 +49,7 @@ withdamp    1      ! (default 0, do not use) use Born-zero damping factor
 #rand1     0       !  skipping  rand2*100000000+rand1 numbers.         
 #rand2     0       !  (see RM48 short writeup in CERNLIB)              
 
-#manyseeds 1       ! Used to perform multiple runs with different random
+manyseeds 1        ! Used to perform multiple runs with different random
                    ! seeds in the same directory.
                    ! If set to 1, the program asks for an integer j.
                    ! The file pwgseeds.dat at line j is read, and the
@@ -56,8 +57,8 @@ withdamp    1      ! (default 0, do not use) use Born-zero damping factor
                    ! sequence for the generation of the events.
                    ! The event file is called pwgevents-'j'.lhe
 
-hmass    125d0       ! Higgs boson mass
-hwidth	 0.00407d0   ! Higgs boson width   
+hmass    125d0     ! Higgs boson mass
+hwidth	 0.00407d0 ! Higgs boson width   
 
 #higgsfixedwidth  1  ! if 1, use old behaviour with fixed width Breit-Wigner
                      ! default is running width
@@ -70,5 +71,7 @@ hdecaymode -1   ! -1 no decay
                 ! 11  ZZ
                 ! 12  gamma gamma      
 
+# reweighting info
+storeinfo_rwgt 1
 
 
